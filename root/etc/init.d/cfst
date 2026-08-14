@@ -1,0 +1,48 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+CRON_TAG="#luci-app-cfst"
+CRON_FILE="/etc/crontabs/root"
+
+apply_cron() {
+	. /lib/functions.sh
+
+	local enabled cron_enabled cron_time
+
+	config_load cfst
+	config_get_bool enabled global enabled 0
+	config_get_bool cron_enabled global cron_enabled 0
+	config_get cron_time global cron_time '30 3 * * *'
+
+	[ -f "$CRON_FILE" ] || touch "$CRON_FILE"
+	sed -i "\#${CRON_TAG}\$#d" "$CRON_FILE"
+
+	if [ "$enabled" = "1" ] && [ "$cron_enabled" = "1" ] && [ -n "$cron_time" ]; then
+		echo "$cron_time /usr/bin/cfst-run >/dev/null 2>&1 $CRON_TAG" >> "$CRON_FILE"
+	fi
+
+	[ -x /etc/init.d/cron ] && /etc/init.d/cron restart >/dev/null 2>&1
+}
+
+remove_cron() {
+	[ -f "$CRON_FILE" ] && sed -i "\#${CRON_TAG}\$#d" "$CRON_FILE"
+	[ -x /etc/init.d/cron ] && /etc/init.d/cron restart >/dev/null 2>&1
+}
+
+start_service() {
+	apply_cron
+}
+
+stop_service() {
+	remove_cron
+}
+
+reload_service() {
+	apply_cron
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'cfst'
+}

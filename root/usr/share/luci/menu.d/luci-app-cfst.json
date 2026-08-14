@@ -1,0 +1,45 @@
+{
+	"admin/services/cfst": {
+		"title": "CloudflareST",
+		"order": 61,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": ["luci-app-cfst"]
+		}
+	},
+	"admin/services/cfst/basic": {
+		"title": "Basic Settings",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "cfst/basic"
+		},
+		"depends": {
+			"acl": ["luci-app-cfst"]
+		}
+	},
+	"admin/services/cfst/results": {
+		"title": "Speedtest Results",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "cfst/results"
+		},
+		"depends": {
+			"acl": ["luci-app-cfst"]
+		}
+	},
+	"admin/services/cfst/log": {
+		"title": "Log",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "cfst/log"
+		},
+		"depends": {
+			"acl": ["luci-app-cfst"]
+		}
+	}
+}

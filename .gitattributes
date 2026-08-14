@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.po text eol=lf
+*.pot text eol=lf
+*.md text eol=lf
+Makefile text eol=lf
+cfst-run text eol=lf
+luci.cfst text eol=lf
+root/etc/config/cfst text eol=lf
+root/etc/init.d/cfst text eol=lf

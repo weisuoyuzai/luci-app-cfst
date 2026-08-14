@@ -1,0 +1,4 @@
+*.ipk
+*.log
+.DS_Store
+Thumbs.db

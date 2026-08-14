@@ -1,0 +1,29 @@
+{
+	"luci-app-cfst": {
+		"description": "Grant UCI and ubus access for luci-app-cfst",
+		"read": {
+			"uci": ["cfst"],
+			"ubus": {
+				"luci.cfst": [
+					"list_nodes",
+					"detect_backends",
+					"get_arch",
+					"download_status",
+					"run_status",
+					"get_log",
+					"get_results"
+				]
+			}
+		},
+		"write": {
+			"uci": ["cfst"],
+			"ubus": {
+				"luci.cfst": [
+					"download_binary",
+					"run_now",
+					"clear_log"
+				]
+			}
+		}
+	}
+}

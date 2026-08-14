@@ -1,0 +1,143 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "CloudflareST"
+msgstr "CloudflareST 优选"
+
+msgid "Basic Settings"
+msgstr "基础设置"
+
+msgid "Speedtest Results"
+msgstr "测速结果"
+
+msgid "Log"
+msgstr "日志"
+
+msgid "Run"
+msgstr "运行"
+
+msgid "Run Now"
+msgstr "立即运行"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Loading..."
+msgstr "加载中..."
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Backend"
+msgstr "代理类型"
+
+msgid "Auto detect"
+msgstr "自动识别"
+
+msgid "PassWall2"
+msgstr "PassWall2"
+
+msgid "PassWall"
+msgstr "PassWall"
+
+msgid "OpenClash (best-effort)"
+msgstr "OpenClash（尽力而为）"
+
+msgid "not detected"
+msgstr "未检测到"
+
+msgid "Node match mode"
+msgstr "节点匹配方式"
+
+msgid "Match by selecting node(s)"
+msgstr "手动选择节点"
+
+msgid "Match by remark keyword"
+msgstr "按备注关键字匹配"
+
+msgid "Node(s)"
+msgstr "节点"
+
+msgid "Remark keyword"
+msgstr "备注关键字"
+
+msgid "Bypass local proxy while testing"
+msgstr "测速时临时关闭本机代理"
+
+msgid "Schedule"
+msgstr "定时任务"
+
+msgid "Enable scheduled run"
+msgstr "启用定时运行"
+
+msgid "Cron schedule"
+msgstr "Cron 时间表达式"
+
+msgid "cfst Binary"
+msgstr "cfst 程序"
+
+msgid "Detected architecture"
+msgstr "检测到的架构"
+
+msgid "Binary status"
+msgstr "程序状态"
+
+msgid "Installed"
+msgstr "已安装"
+
+msgid "Not installed"
+msgstr "未安装"
+
+msgid "Auto-download if missing"
+msgstr "缺失时自动下载"
+
+msgid "GitHub mirror prefix"
+msgstr "GitHub 加速前缀"
+
+msgid "Custom download URL (advanced)"
+msgstr "自定义下载地址（高级）"
+
+msgid "Update cfst binary now"
+msgstr "立即更新 cfst 程序"
+
+msgid "Update Now"
+msgstr "立即更新"
+
+msgid "Downloading..."
+msgstr "下载中..."
+
+msgid "Speed Test Parameters"
+msgstr "测速参数"
+
+msgid "Download test count (-dn)"
+msgstr "下载测速数量 (-dn)"
+
+msgid "Test only these regions (-cfcolo)"
+msgstr "仅测试所选区域 (-cfcolo)"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Clear Log"
+msgstr "清空日志"
+
+msgid "No results yet. Run a speed test from the Basic Settings tab."
+msgstr "暂无结果，请在基础设置页点击立即运行进行测速。"
+
+msgid "IP"
+msgstr "IP"
+
+msgid "Sent"
+msgstr "发送"
+
+msgid "Received"
+msgstr "接收"
+
+msgid "Loss"
+msgstr "丢包率"
+
+msgid "Latency (ms)"
+msgstr "延迟 (ms)"
+
+msgid "Speed (MB/s)"
+msgstr "速度 (MB/s)"

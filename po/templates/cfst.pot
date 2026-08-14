@@ -1,0 +1,143 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "CloudflareST"
+msgstr ""
+
+msgid "Basic Settings"
+msgstr ""
+
+msgid "Speedtest Results"
+msgstr ""
+
+msgid "Log"
+msgstr ""
+
+msgid "Run"
+msgstr ""
+
+msgid "Run Now"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Backend"
+msgstr ""
+
+msgid "Auto detect"
+msgstr ""
+
+msgid "PassWall2"
+msgstr ""
+
+msgid "PassWall"
+msgstr ""
+
+msgid "OpenClash (best-effort)"
+msgstr ""
+
+msgid "not detected"
+msgstr ""
+
+msgid "Node match mode"
+msgstr ""
+
+msgid "Match by selecting node(s)"
+msgstr ""
+
+msgid "Match by remark keyword"
+msgstr ""
+
+msgid "Node(s)"
+msgstr ""
+
+msgid "Remark keyword"
+msgstr ""
+
+msgid "Bypass local proxy while testing"
+msgstr ""
+
+msgid "Schedule"
+msgstr ""
+
+msgid "Enable scheduled run"
+msgstr ""
+
+msgid "Cron schedule"
+msgstr ""
+
+msgid "cfst Binary"
+msgstr ""
+
+msgid "Detected architecture"
+msgstr ""
+
+msgid "Binary status"
+msgstr ""
+
+msgid "Installed"
+msgstr ""
+
+msgid "Not installed"
+msgstr ""
+
+msgid "Auto-download if missing"
+msgstr ""
+
+msgid "GitHub mirror prefix"
+msgstr ""
+
+msgid "Custom download URL (advanced)"
+msgstr ""
+
+msgid "Update cfst binary now"
+msgstr ""
+
+msgid "Update Now"
+msgstr ""
+
+msgid "Downloading..."
+msgstr ""
+
+msgid "Speed Test Parameters"
+msgstr ""
+
+msgid "Download test count (-dn)"
+msgstr ""
+
+msgid "Test only these regions (-cfcolo)"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Clear Log"
+msgstr ""
+
+msgid "No results yet. Run a speed test from the Basic Settings tab."
+msgstr ""
+
+msgid "IP"
+msgstr ""
+
+msgid "Sent"
+msgstr ""
+
+msgid "Received"
+msgstr ""
+
+msgid "Loss"
+msgstr ""
+
+msgid "Latency (ms)"
+msgstr ""
+
+msgid "Speed (MB/s)"
+msgstr ""

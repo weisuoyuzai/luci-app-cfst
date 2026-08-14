@@ -1,0 +1,183 @@
+#!/bin/sh
+# cfst-run -- CloudflareST speedtest + apply-to-node run script.
+# Generalized version of the original cfst_passwall2.sh, driven entirely by
+# /etc/config/cfst and dispatching to a backend-<name>.sh implementation for
+# passwall / passwall2 / openclash. See the plan doc for the full design.
+
+. /usr/share/cfst/backend-common.sh
+
+uget() {
+	uci -q get "cfst.global.$1"
+}
+
+BACKEND_CFG=$(uget backend);            BACKEND_CFG="${BACKEND_CFG:-auto}"
+MATCH_MODE=$(uget match_mode);          MATCH_MODE="${MATCH_MODE:-keyword}"
+NODE_KEYWORD=$(uget node_keyword)
+NODE_IDS=$(uget node_id)
+NODE_BACKEND=$(uget node_backend)
+BYPASS_LOCAL_PROXY=$(uget bypass_local_proxy); BYPASS_LOCAL_PROXY="${BYPASS_LOCAL_PROXY:-1}"
+AUTO_DOWNLOAD=$(uget auto_download);     AUTO_DOWNLOAD="${AUTO_DOWNLOAD:-1}"
+CFST_THREADS=$(uget cfst_threads);       CFST_THREADS="${CFST_THREADS:-200}"
+CFST_PING_COUNT=$(uget cfst_ping_count); CFST_PING_COUNT="${CFST_PING_COUNT:-4}"
+CFST_DOWNLOAD_COUNT=$(uget cfst_download_count); CFST_DOWNLOAD_COUNT="${CFST_DOWNLOAD_COUNT:-10}"
+CFST_DOWNLOAD_TIME=$(uget cfst_download_time);   CFST_DOWNLOAD_TIME="${CFST_DOWNLOAD_TIME:-10}"
+CFST_LATENCY_LIMIT=$(uget cfst_latency_limit);   CFST_LATENCY_LIMIT="${CFST_LATENCY_LIMIT:-200}"
+CFST_LOSS_LIMIT=$(uget cfst_loss_limit);         CFST_LOSS_LIMIT="${CFST_LOSS_LIMIT:-0.2}"
+CFST_SPEED_LIMIT=$(uget cfst_speed_limit);       CFST_SPEED_LIMIT="${CFST_SPEED_LIMIT:-5}"
+CFST_RESULT_COUNT=$(uget cfst_result_count);     CFST_RESULT_COUNT="${CFST_RESULT_COUNT:-5}"
+CFST_COLO=$(uget cfst_colo)
+IP_TXT=$(uget ip_txt)
+
+# ------------------------- lock -------------------------
+
+if pid_file_alive "$PID_FILE"; then
+	log "错误: 已有一个 cfst-run 实例正在运行 (pid $(cat "$PID_FILE" 2>/dev/null))，本次跳过"
+	exit 1
+fi
+echo $$ > "$PID_FILE"
+
+RESOLVED_BACKEND=""
+PROXY_DISABLED=0
+ORIG_LOCALHOST_PROXY=""
+PROXY_WAS_TOGGLED=0
+LAST_RESULT="failed"
+LAST_IP=""
+
+write_run_status() {
+	local running="$1"
+	cat > "$RUN_STATUS_FILE" <<-EOF
+	{"running":$running,"backend":"$(json_escape "$RESOLVED_BACKEND")","last_run":$(date +%s),"last_result":"$(json_escape "$LAST_RESULT")","last_ip":"$(json_escape "$LAST_IP")"}
+	EOF
+}
+
+on_exit() {
+	if [ -n "$RESOLVED_BACKEND" ] && [ "$PROXY_DISABLED" = "1" ]; then
+		log "检测到脚本异常退出，正在恢复本机代理设置..."
+		restore_local_proxy_config
+		commit_restart
+	fi
+	write_run_status false
+	rm -f "$PID_FILE"
+}
+trap on_exit EXIT
+
+log "===== 开始测速 ====="
+
+# ------------------------- resolve backend -------------------------
+
+RESOLVED_BACKEND=$(resolve_backend "$BACKEND_CFG")
+if [ -z "$RESOLVED_BACKEND" ]; then
+	write_run_status false
+	exit 1
+fi
+log "使用后端: $RESOLVED_BACKEND"
+write_run_status true
+
+if ! source_backend "$RESOLVED_BACKEND"; then
+	log "错误: 未知后端 $RESOLVED_BACKEND"
+	exit 1
+fi
+
+# ------------------------- bypass local proxy for the test -------------------------
+
+if [ "$BYPASS_LOCAL_PROXY" = "1" ]; then
+	disable_local_proxy
+fi
+
+# ------------------------- ensure cfst binary -------------------------
+
+if [ ! -x "$CFST_BIN" ]; then
+	if [ "$AUTO_DOWNLOAD" = "1" ]; then
+		log "未找到 cfst 可执行文件，尝试自动下载..."
+		/usr/share/cfst/download-cfst.sh >> "$LOG_FILE" 2>&1
+	fi
+	if [ ! -x "$CFST_BIN" ]; then
+		log "错误: 未找到可执行文件 $CFST_BIN，请检查安装/下载是否正确"
+		exit 1
+	fi
+fi
+
+# ------------------------- run cfst -------------------------
+
+cd "$CFST_DIR" || exit 1
+
+FULL_ARGS="-n $CFST_THREADS -t $CFST_PING_COUNT -dn $CFST_DOWNLOAD_COUNT -dt $CFST_DOWNLOAD_TIME -tl $CFST_LATENCY_LIMIT -tlr $CFST_LOSS_LIMIT -sl $CFST_SPEED_LIMIT -p $CFST_RESULT_COUNT -o $RESULT_CSV"
+if [ -n "$CFST_COLO" ]; then
+	FULL_ARGS="$FULL_ARGS -cfcolo $CFST_COLO"
+fi
+if [ -n "$IP_TXT" ] && [ -f "$IP_TXT" ]; then
+	FULL_ARGS="$FULL_ARGS -f $IP_TXT"
+fi
+
+rm -f "$RESULT_CSV"
+$CFST_BIN $FULL_ARGS >> "$LOG_FILE" 2>&1
+
+if [ ! -f "$RESULT_CSV" ]; then
+	log "错误: 测速未生成结果文件，本次跳过"
+	exit 1
+fi
+
+BEST_IP=$(awk -F, 'NR==2{print $1}' "$RESULT_CSV")
+
+case "$BEST_IP" in
+	[0-9]*.[0-9]*.[0-9]*.[0-9]*)
+		;;
+	*)
+		log "错误: 未能从结果中解析出有效 IP，本次跳过（原始值: $BEST_IP）"
+		exit 1
+		;;
+esac
+
+log "测速完成，最优 IP: $BEST_IP"
+LAST_IP="$BEST_IP"
+
+restore_local_proxy_config
+
+# ------------------------- resolve target node ids -------------------------
+
+if [ "$MATCH_MODE" = "id" ]; then
+	if [ -n "$NODE_BACKEND" ] && [ "$NODE_BACKEND" != "$RESOLVED_BACKEND" ]; then
+		log "错误: 已选择的节点是在后端 '$NODE_BACKEND' 下选取的，与当前解析出的后端 '$RESOLVED_BACKEND' 不一致，请在基础设置中重新选择节点"
+		exit 1
+	fi
+	if [ -n "$NODE_IDS" ]; then
+		TARGET_IDS="$NODE_IDS"
+	else
+		log "错误: 未在基础设置中选择任何节点（match_mode=id 但 node_id 为空）"
+		exit 1
+	fi
+else
+	if [ -n "$NODE_KEYWORD" ]; then
+		TARGET_IDS=$(match_keyword "$NODE_KEYWORD")
+	else
+		log "错误: 未设置备注关键字（match_mode=keyword 但 node_keyword 为空）"
+		exit 1
+	fi
+fi
+
+if [ -z "$TARGET_IDS" ]; then
+	log "错误: 未匹配到任何节点，请检查节点选择/备注关键字与当前后端 ($RESOLVED_BACKEND) 是否一致"
+	exit 1
+fi
+
+# ------------------------- update nodes -------------------------
+
+CHANGED=0
+for id in $TARGET_IDS; do
+	if update_node "$id" "$BEST_IP"; then
+		CHANGED=1
+	fi
+done
+
+if [ "$CHANGED" = "1" ] || [ "$PROXY_WAS_TOGGLED" = "1" ]; then
+	commit_restart
+	LAST_RESULT="success"
+else
+	log "没有任何节点被更新"
+	LAST_RESULT="no_change"
+fi
+
+log "===== 本次任务结束 ====="
+echo "" >> "$LOG_FILE"
+
+exit 0

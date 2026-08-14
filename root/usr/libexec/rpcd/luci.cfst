@@ -1,0 +1,245 @@
+#!/bin/sh
+# ubus object "luci.cfst" backing the LuCI JS views. Standard rpcd sh
+# dispatcher: `list` enumerates methods, `call <method>` reads a JSON
+# object on stdin and must print a JSON object on stdout.
+
+. /usr/share/libubox/jshn.sh
+. /usr/share/cfst/backend-common.sh
+
+read_input() {
+	local input
+	input="$(cat)"
+	[ -n "$input" ] || input='{}'
+	json_load "$input"
+}
+
+resolve_target_backend() {
+	# $1 = optional explicit backend override from the caller
+	local explicit="$1" cfg
+	if [ -n "$explicit" ]; then
+		resolve_backend "$explicit"
+		return
+	fi
+	cfg=$(uci -q get cfst.global.backend)
+	resolve_backend "${cfg:-auto}"
+}
+
+handle_detect_backends() {
+	local b resolved hint
+	json_init
+	json_add_array available
+	for b in passwall2 passwall openclash; do
+		backend_available "$b" && json_add_string "" "$b"
+	done
+	json_close_array
+	hint=$(resolve_target_backend "" 2>/dev/null)
+	json_add_string active_hint "$hint"
+	json_dump
+}
+
+handle_list_nodes() {
+	local backend_arg resolved tsv id remark address type
+
+	read_input
+	json_get_var backend_arg backend 2>/dev/null
+
+	resolved=$(resolve_target_backend "$backend_arg" 2>/dev/null)
+	if [ -z "$resolved" ]; then
+		json_init
+		json_add_boolean ok 0
+		json_add_string error "no single backend resolved (none or multiple detected)"
+		json_add_array nodes
+		json_close_array
+		json_dump
+		return
+	fi
+
+	source_backend "$resolved"
+	tsv=$(list_nodes 2>/dev/null)
+
+	json_init
+	json_add_boolean ok 1
+	json_add_string backend "$resolved"
+	json_add_array nodes
+	while IFS="$(printf '\t')" read -r id remark address type || [ -n "$id" ]; do
+		[ -n "$id" ] || continue
+		json_add_object ""
+		json_add_string id "$id"
+		json_add_string remark "$remark"
+		json_add_string address "$address"
+		json_add_string type "$type"
+		json_close_object
+	done <<-CFST_LN
+	$tsv
+	CFST_LN
+	json_close_array
+	json_dump
+}
+
+handle_get_arch() {
+	local arch installed mtime
+	arch=$(detect_arch)
+	if [ -x "$CFST_BIN" ]; then
+		installed=1
+		mtime=$(date -r "$CFST_BIN" +%s 2>/dev/null)
+		[ -n "$mtime" ] || mtime=0
+	else
+		installed=0
+		mtime=0
+	fi
+	json_init
+	json_add_string arch "$arch"
+	json_add_boolean installed "$installed"
+	json_add_int mtime "$mtime"
+	json_dump
+}
+
+handle_download_binary() {
+	local mirror
+	read_input
+	json_get_var mirror mirror_prefix 2>/dev/null
+
+	if pid_file_alive "$DOWNLOAD_PID_FILE"; then
+		json_init
+		json_add_boolean started 0
+		json_add_string error "download already in progress"
+		json_dump
+		return
+	fi
+
+	( /usr/share/cfst/download-cfst.sh "$mirror" >/dev/null 2>&1 & )
+
+	json_init
+	json_add_boolean started 1
+	json_dump
+}
+
+handle_download_status() {
+	if [ -f "$DOWNLOAD_STATUS_FILE" ]; then
+		cat "$DOWNLOAD_STATUS_FILE"
+	else
+		echo '{"state":"idle","time":0,"arch":"","message":""}'
+	fi
+}
+
+handle_run_now() {
+	if pid_file_alive "$PID_FILE"; then
+		json_init
+		json_add_boolean started 0
+		json_add_string error "a run is already in progress"
+		json_dump
+		return
+	fi
+
+	( /usr/bin/cfst-run >/dev/null 2>&1 & )
+
+	json_init
+	json_add_boolean started 1
+	json_dump
+}
+
+handle_run_status() {
+	if [ -f "$RUN_STATUS_FILE" ]; then
+		cat "$RUN_STATUS_FILE"
+	else
+		echo '{"running":false,"backend":"","last_run":0,"last_result":"","last_ip":""}'
+	fi
+}
+
+handle_get_log() {
+	local lines content
+
+	read_input
+	json_get_var lines lines 2>/dev/null
+	[ -n "$lines" ] || lines=200
+
+	content=$(tail -n "$lines" "$LOG_FILE" 2>/dev/null)
+
+	json_init
+	json_add_array lines
+	while IFS= read -r line || [ -n "$line" ]; do
+		json_add_string "" "$line"
+	done <<-CFST_LOG
+	$content
+	CFST_LOG
+	json_close_array
+	json_dump
+}
+
+handle_clear_log() {
+	: > "$LOG_FILE"
+	json_init
+	json_add_boolean ok 1
+	json_dump
+}
+
+handle_get_results() {
+	local rows c1 c2 c3 c4 c5 c6 c7
+
+	if [ ! -f "$RESULT_CSV" ]; then
+		json_init
+		json_add_array results
+		json_close_array
+		json_dump
+		return
+	fi
+
+	rows=$(tail -n +2 "$RESULT_CSV" 2>/dev/null)
+
+	json_init
+	json_add_array results
+	while IFS=',' read -r c1 c2 c3 c4 c5 c6 c7 || [ -n "$c1" ]; do
+		[ -n "$c1" ] || continue
+		if [ -n "$c7" ] || [ -z "$c6" ]; then
+			json_add_object ""
+			json_add_boolean raw 1
+			json_add_string line "$c1,$c2,$c3,$c4,$c5,$c6,$c7"
+			json_close_object
+		else
+			json_add_object ""
+			json_add_string ip "$c1"
+			json_add_string sent "$c2"
+			json_add_string received "$c3"
+			json_add_string loss "$c4"
+			json_add_string latency "$c5"
+			json_add_string speed "$c6"
+			json_close_object
+		fi
+	done <<-CFST_RES
+	$rows
+	CFST_RES
+	json_close_array
+	json_dump
+}
+
+case "$1" in
+	list)
+		json_init
+		json_add_object "list_nodes";      json_add_string backend ""; json_close_object
+		json_add_object "detect_backends"; json_close_object
+		json_add_object "get_arch";        json_close_object
+		json_add_object "download_binary"; json_add_string mirror_prefix ""; json_close_object
+		json_add_object "download_status"; json_close_object
+		json_add_object "run_now";         json_close_object
+		json_add_object "run_status";      json_close_object
+		json_add_object "get_log";         json_add_int lines 0; json_close_object
+		json_add_object "clear_log";       json_close_object
+		json_add_object "get_results";     json_close_object
+		json_dump
+		;;
+	call)
+		case "$2" in
+			list_nodes)       handle_list_nodes ;;
+			detect_backends)  handle_detect_backends ;;
+			get_arch)         handle_get_arch ;;
+			download_binary)  handle_download_binary ;;
+			download_status)  handle_download_status ;;
+			run_now)          handle_run_now ;;
+			run_status)       handle_run_status ;;
+			get_log)          handle_get_log ;;
+			clear_log)        handle_clear_log ;;
+			get_results)      handle_get_results ;;
+			*) echo '{}'; exit 1 ;;
+		esac
+		;;
+esac
