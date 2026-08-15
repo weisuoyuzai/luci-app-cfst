@@ -50,5 +50,4 @@ define Package/luci-app-cfst/postrm
 exit 0
 endef
 
-# call BuildPackage - OpenWrt buildroot signature
 $(eval $(call BuildPackage,luci-app-cfst))
