@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 'require rpc';
 
 var callDetectBackends = rpc.declare({
@@ -120,7 +121,7 @@ var COLO_PRESETS = {
 	]
 };
 
-return {
+return baseclass.extend({
 	detectBackends: callDetectBackends,
 	listNodes: callListNodes,
 	getArch: callGetArch,
@@ -132,4 +133,4 @@ return {
 	clearLog: callClearLog,
 	getResults: callGetResults,
 	COLO_PRESETS: COLO_PRESETS
-};
+});
