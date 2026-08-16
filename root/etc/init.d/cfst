@@ -17,7 +17,7 @@ apply_cron() {
 	config_get cron_time global cron_time '30 3 * * *'
 
 	[ -f "$CRON_FILE" ] || touch "$CRON_FILE"
-	sed -i "\#${CRON_TAG}\$#d" "$CRON_FILE"
+	sed -i "\|${CRON_TAG}\$|d" "$CRON_FILE"
 
 	if [ "$enabled" = "1" ] && [ "$cron_enabled" = "1" ] && [ -n "$cron_time" ]; then
 		echo "$cron_time /usr/bin/cfst-run >/dev/null 2>&1 $CRON_TAG" >> "$CRON_FILE"
@@ -27,7 +27,7 @@ apply_cron() {
 }
 
 remove_cron() {
-	[ -f "$CRON_FILE" ] && sed -i "\#${CRON_TAG}\$#d" "$CRON_FILE"
+	[ -f "$CRON_FILE" ] && sed -i "\|${CRON_TAG}\$|d" "$CRON_FILE"
 	[ -x /etc/init.d/cron ] && /etc/init.d/cron restart >/dev/null 2>&1
 }
 
