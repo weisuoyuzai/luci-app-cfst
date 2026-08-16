@@ -36,6 +36,17 @@ jobs:
           FEED_DIR: ${{ github.workspace }}/..
           PACKAGES: luci-app-cfst
 
+      - name: Debug workspace contents
+        run: |
+          echo "== workspace tree (top levels) =="
+          find "$GITHUB_WORKSPACE" -maxdepth 3 | sort
+          echo "== any ipk/apk anywhere under workspace parent =="
+          find "$GITHUB_WORKSPACE/.." -iname '*.ipk' -o -iname '*.apk' 2>/dev/null
+          echo "== luci-app-cfst compile log, if present =="
+          find "$GITHUB_WORKSPACE" -path '*luci-app-cfst*compile*' -o -path '*luci-app-cfst*install*' 2>/dev/null
+          LOGF=$(find "$GITHUB_WORKSPACE/logs" -path '*luci-app-cfst*' -name '*.txt' 2>/dev/null | head -1)
+          if [ -n "$LOGF" ]; then echo "== $LOGF =="; cat "$LOGF"; fi
+
       - name: Upload ipk artifact
         uses: actions/upload-artifact@v4
         with:
