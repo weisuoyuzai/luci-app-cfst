@@ -40,11 +40,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-cfst-ipk
-          path: bin/packages/${{ matrix.arch }}/**/*.ipk
+          # luci-app-cfst has LUCI_PKGARCH:=all, so the SDK places the ipk
+          # under bin/packages/all/, not bin/packages/<arch>/.
+          path: bin/packages/**/*.ipk
           if-no-files-found: error
 
       - name: Attach ipk to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: bin/packages/${{ matrix.arch }}/**/*.ipk
+          files: bin/packages/**/*.ipk
