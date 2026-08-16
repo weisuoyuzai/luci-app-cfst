@@ -32,6 +32,38 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Compile Chinese translation into the package
+        run: |
+          set -e
+          # Ship the zh-cn UI strings inside luci-app-cfst itself instead of
+          # a separate luci-i18n-cfst-zh-cn package (see the PACKAGES note
+          # below for why that package can't be built here). This compiles
+          # po/zh_Hans/cfst.po with po2lmo - the same tool luci.mk itself
+          # would use - and drops the resulting .lmo where LuCI's runtime
+          # i18n loader expects it, so it gets bundled by the normal `root/`
+          # copy step like any other file.
+          #
+          # po2lmo has no prebuilt binary and isn't split out as its own
+          # feed package, so it's built from luci-base's own sources here.
+          # Pinned to the openwrt-24.10 branch to match the SDK version above.
+          LUCI_REF=openwrt-24.10
+          BASE="https://raw.githubusercontent.com/openwrt/luci/$LUCI_REF/modules/luci-base/src"
+          work=$(mktemp -d)
+          mkdir -p "$work/contrib" "$work/lib"
+          curl -fsSL -o "$work/po2lmo.c" "$BASE/po2lmo.c"
+          curl -fsSL -o "$work/contrib/lemon.c" "$BASE/contrib/lemon.c"
+          curl -fsSL -o "$work/contrib/lempar.c" "$BASE/contrib/lempar.c"
+          curl -fsSL -o "$work/lib/lmo.c" "$BASE/lib/lmo.c"
+          curl -fsSL -o "$work/lib/lmo.h" "$BASE/lib/lmo.h"
+          curl -fsSL -o "$work/lib/plural_formula.y" "$BASE/lib/plural_formula.y"
+          cd "$work"
+          cc -std=gnu17 -o contrib/lemon contrib/lemon.c
+          ./contrib/lemon -q lib/plural_formula.y
+          cc -DNDEBUG -o po2lmo po2lmo.c lib/lmo.c lib/plural_formula.c
+          install -d "$GITHUB_WORKSPACE/root/usr/lib/lua/luci/i18n"
+          ./po2lmo "$GITHUB_WORKSPACE/po/zh_Hans/cfst.po" \
+            "$GITHUB_WORKSPACE/root/usr/lib/lua/luci/i18n/cfst.zh-cn.lmo"
+
       - name: Build luci-app-cfst with the OpenWrt SDK
         uses: openwrt/gh-action-sdk@main
         env:
