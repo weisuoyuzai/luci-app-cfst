@@ -20,8 +20,11 @@ jobs:
       matrix:
         # luci-app-cfst has LUCI_PKGARCH:=all (no compiled code), so a single
         # SDK arch is enough to produce an ipk installable on any target.
+        # Pinned to the 24.10 release line because it's the last one whose
+        # SDK still packages as ipk/opkg; 25.12+ and the master snapshot
+        # default to the newer apk format instead.
         arch:
-          - x86_64
+          - x86_64-24.10.8
 
     steps:
       - name: Checkout
@@ -36,22 +39,15 @@ jobs:
           FEED_DIR: ${{ github.workspace }}/..
           PACKAGES: luci-app-cfst
 
-      - name: Upload package artifact
+      - name: Upload ipk artifact
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-cfst-ipk
-          # The openwrt/gh-action-sdk snapshot SDK builds apk packages by
-          # default (CONFIG_USE_APK); older/pinned SDKs still produce ipk.
-          # Match both so the workflow doesn't break when that changes.
-          path: |
-            bin/packages/**/*.ipk
-            bin/packages/**/*.apk
+          path: bin/packages/**/*.ipk
           if-no-files-found: error
 
-      - name: Attach package to GitHub Release
+      - name: Attach ipk to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            bin/packages/**/*.ipk
-            bin/packages/**/*.apk
+          files: bin/packages/**/*.ipk
