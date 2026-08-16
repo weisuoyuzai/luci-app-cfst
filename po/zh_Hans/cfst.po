@@ -64,6 +64,9 @@ msgstr "节点列表来自：%s。如果修改了上方的代理类型，请先�
 msgid "Could not load the node list (%s). Save your backend selection and reopen this page, or use the keyword match mode instead."
 msgstr "无法加载节点列表（%s）。请保存代理类型选择后重新打开本页面，或改用关键字匹配方式。"
 
+msgid "No nodes available"
+msgstr "暂无可用节点"
+
 msgid "unknown error"
 msgstr "未知错误"
 

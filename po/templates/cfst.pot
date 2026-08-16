@@ -64,6 +64,9 @@ msgstr ""
 msgid "Could not load the node list (%s). Save your backend selection and reopen this page, or use the keyword match mode instead."
 msgstr ""
 
+msgid "No nodes available"
+msgstr ""
+
 msgid "unknown error"
 msgstr ""
 

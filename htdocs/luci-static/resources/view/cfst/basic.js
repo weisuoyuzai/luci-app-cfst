@@ -170,6 +170,10 @@ return view.extend({
 			});
 			o.description = _('Loaded from backend: %s. If you change the Backend above, click Save, then reopen this page to refresh this list.').format(nodes.backend);
 		} else {
+			/* LuCI's form.MultiValue renders a blank choice list as `null`
+			 * rather than `{}`, which crashes ui.Dropdown's render(). Always
+			 * provide at least one (disabled-looking) choice to avoid that. */
+			o.value('', _('No nodes available'));
 			o.description = _('Could not load the node list (%s). Save your backend selection and reopen this page, or use the keyword match mode instead.').format(nodes.error || _('unknown error'));
 		}
 
