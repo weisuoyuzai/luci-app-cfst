@@ -67,7 +67,7 @@ var CfstColoWidget = form.Value.extend({
 
 		Object.keys(cfstlib.COLO_PRESETS).forEach(function(region) {
 			var line = E('div', { 'style': 'margin-bottom:4px' }, [
-				E('strong', {}, region + ': ')
+				E('strong', {}, _(region) + ': ')
 			]);
 
 			cfstlib.COLO_PRESETS[region].forEach(function(item) {
@@ -84,7 +84,7 @@ var CfstColoWidget = form.Value.extend({
 				});
 
 				line.appendChild(cb);
-				line.appendChild(E('span', {}, ' ' + item.code + ' (' + item.name + ')'));
+				line.appendChild(E('span', {}, ' ' + item.code + ' (' + _(item.name) + ')'));
 			});
 
 			container.appendChild(line);
