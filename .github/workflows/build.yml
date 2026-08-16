@@ -33,6 +33,7 @@ jobs:
         uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.arch }}
+          FEED_DIR: ${{ github.workspace }}/..
           PACKAGES: luci-app-cfst
 
       - name: Upload ipk artifact
