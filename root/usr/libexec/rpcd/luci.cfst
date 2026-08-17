@@ -190,7 +190,7 @@ handle_get_results() {
 	json_add_array results
 	while IFS=',' read -r c1 c2 c3 c4 c5 c6 c7 || [ -n "$c1" ]; do
 		[ -n "$c1" ] || continue
-		if [ -n "$c7" ] || [ -z "$c6" ]; then
+		if [ -z "$c6" ]; then
 			json_add_object ""
 			json_add_boolean raw 1
 			json_add_string line "$c1,$c2,$c3,$c4,$c5,$c6,$c7"
@@ -203,6 +203,7 @@ handle_get_results() {
 			json_add_string loss "$c4"
 			json_add_string latency "$c5"
 			json_add_string speed "$c6"
+			json_add_string colo "$c7"
 			json_close_object
 		fi
 	done <<-CFST_RES

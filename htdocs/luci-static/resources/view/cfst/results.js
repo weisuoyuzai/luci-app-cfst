@@ -8,7 +8,7 @@ function renderTable(results) {
 	var rows = (results || []).map(function(r) {
 		if (r.raw) {
 			return E('tr', {}, [
-				E('td', { 'colspan': 6 }, r.line || '')
+				E('td', { 'colspan': 7 }, r.line || '')
 			]);
 		}
 		return E('tr', {}, [
@@ -17,13 +17,14 @@ function renderTable(results) {
 			E('td', {}, r.received || ''),
 			E('td', {}, r.loss || ''),
 			E('td', {}, r.latency || ''),
-			E('td', {}, r.speed || '')
+			E('td', {}, r.speed || ''),
+			E('td', {}, r.colo || '')
 		]);
 	});
 
 	if (!rows.length)
 		rows.push(E('tr', {}, [
-			E('td', { 'colspan': 6 }, _('No results yet. Run a speed test from the Basic Settings tab.'))
+			E('td', { 'colspan': 7 }, _('No results yet. Run a speed test from the Basic Settings tab.'))
 		]));
 
 	return E('table', { 'class': 'table cbi-section-table' }, [
@@ -33,7 +34,8 @@ function renderTable(results) {
 			E('th', { 'class': 'th' }, _('Received')),
 			E('th', { 'class': 'th' }, _('Loss')),
 			E('th', { 'class': 'th' }, _('Latency (ms)')),
-			E('th', { 'class': 'th' }, _('Speed (MB/s)'))
+			E('th', { 'class': 'th' }, _('Speed (MB/s)')),
+			E('th', { 'class': 'th' }, _('Data Center'))
 		])
 	].concat(rows));
 }
