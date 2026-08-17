@@ -238,7 +238,7 @@ return view.extend({
 		o.description = _('Automatically download cfst on first run if the binary is not present yet.');
 
 		o = s.option(form.Value, 'mirror_prefix', _('GitHub mirror prefix'));
-		o.placeholder = 'https://ghproxy.com/';
+		o.placeholder = 'https://gh-proxy.com/';
 		o.rmempty = true;
 		o.description = _('Prepended to the GitHub release download URL to speed up access. Leave empty to download directly from GitHub. This field may need to be updated over time as public mirrors change.');
 

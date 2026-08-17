@@ -24,7 +24,7 @@ trap 'rm -f "$DOWNLOAD_PID_FILE"' EXIT
 MIRROR_ARG="$1"
 . /lib/functions.sh
 config_load cfst
-config_get MIRROR_UCI global mirror_prefix 'https://ghproxy.com/'
+config_get MIRROR_UCI global mirror_prefix 'https://gh-proxy.com/'
 config_get BIN_URL_OVERRIDE global cfst_bin_url ''
 
 MIRROR_PREFIX="${MIRROR_ARG:-$MIRROR_UCI}"
@@ -92,6 +92,15 @@ fi
 
 cp "$BIN_PATH" "$CFST_BIN"
 chmod +x "$CFST_BIN"
+
+# cfst reads ip.txt/ip6.txt (IP ranges to test) as a relative path from its
+# working directory unless -f overrides it; the release tarball ships them
+# next to the binary, so carry them over too or every run fails with
+# "open ip.txt: no such file or directory".
+ARCHIVE_DIR=$(dirname "$BIN_PATH")
+for f in ip.txt ip6.txt; do
+	[ -f "$ARCHIVE_DIR/$f" ] && cp "$ARCHIVE_DIR/$f" "$CFST_BIN_DIR/$f"
+done
 
 rm -f "$TAR_FILE"
 rm -rf "$EXTRACT_DIR"
