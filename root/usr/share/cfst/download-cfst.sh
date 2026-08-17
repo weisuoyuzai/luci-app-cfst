@@ -46,8 +46,8 @@ fi
 log "开始下载 cfst: $URL"
 write_status "running" "downloading" "$ARCH"
 
-TAR_FILE="$CFST_DIR/cfst_download.tar.gz"
-EXTRACT_DIR="$CFST_DIR/cfst_extract"
+TAR_FILE="$CFST_RUN_DIR/cfst_download.tar.gz"
+EXTRACT_DIR="$CFST_RUN_DIR/cfst_extract"
 rm -rf "$EXTRACT_DIR"
 mkdir -p "$EXTRACT_DIR"
 

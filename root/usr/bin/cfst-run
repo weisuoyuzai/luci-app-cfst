@@ -99,7 +99,7 @@ fi
 
 # ------------------------- run cfst -------------------------
 
-cd "$CFST_DIR" || exit 1
+cd "$CFST_BIN_DIR" || exit 1
 
 FULL_ARGS="-n $CFST_THREADS -t $CFST_PING_COUNT -dn $CFST_DOWNLOAD_COUNT -dt $CFST_DOWNLOAD_TIME -tl $CFST_LATENCY_LIMIT -tlr $CFST_LOSS_LIMIT -sl $CFST_SPEED_LIMIT -p $CFST_RESULT_COUNT -o $RESULT_CSV"
 if [ -n "$CFST_COLO" ]; then

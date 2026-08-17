@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree *)",
+      "Bash(MSYS_NO_PATHCONV=1 git show origin/master:.github/workflows/build.yml)",
+      "Bash(git ls-remote *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh run *)",
+      "PowerShell(gh run list --repo weisuoyuzai/luci-app-cfst --limit 5)",
+      "PowerShell(gh run list --workflow=build.yml --limit 5)",
+      "Bash(curl -s \"https://api.github.com/repos/weisuoyuzai/luci-app-cfst/actions/runs?per_page=5\")",
+      "Bash(curl -s \"https://api.github.com/repos/weisuoyuzai/luci-app-cfst\")",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

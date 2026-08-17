@@ -2,16 +2,25 @@
 # Shared paths, logging and small helpers used by cfst-run, download-cfst.sh
 # and all backend-*.sh scripts. Meant to be sourced, not executed directly.
 
-CFST_DIR="/root/cfst"
-CFST_BIN="$CFST_DIR/cfst"
-RESULT_CSV="$CFST_DIR/result.csv"
-LOG_FILE="$CFST_DIR/cfst.log"
-PID_FILE="$CFST_DIR/run.pid"
-RUN_STATUS_FILE="$CFST_DIR/run_status.json"
-DOWNLOAD_STATUS_FILE="$CFST_DIR/download.status"
-DOWNLOAD_PID_FILE="$CFST_DIR/download.pid"
+# The downloaded cfst binary lives under /usr/share (persistent across
+# reboots, part of the overlay but just a single small file) so it doesn't
+# need to be re-downloaded every boot. Everything else (log, pid, status,
+# result csv) is short-lived run state and lives on tmpfs (/tmp) instead of
+# /root -- /root sits on the same small r/w overlay as the rest of the
+# firmware, and constantly rewriting logs/results there risks filling it up
+# (which then causes writes to silently fail) and generally isn't the right
+# place for a package to keep runtime state.
+CFST_BIN_DIR="/usr/share/cfst/bin"
+CFST_RUN_DIR="/tmp/cfst"
+CFST_BIN="$CFST_BIN_DIR/cfst"
+RESULT_CSV="$CFST_RUN_DIR/result.csv"
+LOG_FILE="$CFST_RUN_DIR/cfst.log"
+PID_FILE="$CFST_RUN_DIR/run.pid"
+RUN_STATUS_FILE="$CFST_RUN_DIR/run_status.json"
+DOWNLOAD_STATUS_FILE="$CFST_RUN_DIR/download.status"
+DOWNLOAD_PID_FILE="$CFST_RUN_DIR/download.pid"
 
-mkdir -p "$CFST_DIR"
+mkdir -p "$CFST_BIN_DIR" "$CFST_RUN_DIR"
 
 log() {
 	echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOG_FILE"
@@ -63,6 +72,13 @@ resolve_backend() {
 	local configured="$1" found="" count=0 b
 
 	if [ -n "$configured" ] && [ "$configured" != "auto" ]; then
+		case "$configured" in
+			passwall2|passwall|openclash) ;;
+			*)
+				log "错误: 配置的后端类型 '$configured' 无效，请在基础设置中重新选择后端"
+				return 1
+				;;
+		esac
 		if backend_available "$configured"; then
 			echo "$configured"
 			return 0
