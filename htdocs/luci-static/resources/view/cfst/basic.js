@@ -101,7 +101,7 @@ return view.extend({
 		return Promise.all([
 			cfstlib.detectBackends().catch(function() { return {}; }),
 			cfstlib.getArch().catch(function() { return {}; }),
-			cfstlib.listNodes({}).catch(function() { return {}; })
+			cfstlib.listNodes().catch(function() { return {}; })
 		]);
 	},
 

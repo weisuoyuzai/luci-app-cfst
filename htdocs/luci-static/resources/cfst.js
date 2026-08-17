@@ -5,14 +5,14 @@
 var callDetectBackends = rpc.declare({
 	object: 'luci.cfst',
 	method: 'detect_backends',
-	expect: { available: [] }
+	expect: {}
 });
 
 var callListNodes = rpc.declare({
 	object: 'luci.cfst',
 	method: 'list_nodes',
 	params: [ 'backend' ],
-	expect: { nodes: [] }
+	expect: {}
 });
 
 var callGetArch = rpc.declare({
@@ -50,7 +50,7 @@ var callGetLog = rpc.declare({
 	object: 'luci.cfst',
 	method: 'get_log',
 	params: [ 'lines' ],
-	expect: { lines: [] }
+	expect: {}
 });
 
 var callClearLog = rpc.declare({
@@ -62,7 +62,7 @@ var callClearLog = rpc.declare({
 var callGetResults = rpc.declare({
 	object: 'luci.cfst',
 	method: 'get_results',
-	expect: { results: [] }
+	expect: {}
 });
 
 /* Curated, non-exhaustive list of common Cloudflare colo IATA codes,

@@ -6,7 +6,7 @@
 
 return view.extend({
 	load: function() {
-		return cfstlib.getLog({ lines: 500 }).catch(function() { return {}; });
+		return cfstlib.getLog(500).catch(function() { return {}; });
 	},
 
 	render: function(data) {
@@ -20,7 +20,7 @@ return view.extend({
 		};
 
 		var refresh = function() {
-			return cfstlib.getLog({ lines: 500 }).then(function(res) {
+			return cfstlib.getLog(500).then(function(res) {
 				pre.textContent = (res.lines || []).join('\n');
 				scrollToEnd();
 			});
