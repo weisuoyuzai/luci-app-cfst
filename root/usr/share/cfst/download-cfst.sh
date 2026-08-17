@@ -53,7 +53,7 @@ mkdir -p "$EXTRACT_DIR"
 
 DL_OK=0
 if command -v curl >/dev/null 2>&1; then
-	curl -fL --connect-timeout 15 -o "$TAR_FILE" "$URL" >> "$LOG_FILE" 2>&1 && DL_OK=1
+	curl -fL -sS --connect-timeout 15 -o "$TAR_FILE" "$URL" >> "$LOG_FILE" 2>&1 && DL_OK=1
 else
 	uclient-fetch -O "$TAR_FILE" "$URL" >> "$LOG_FILE" 2>&1 && DL_OK=1
 fi
