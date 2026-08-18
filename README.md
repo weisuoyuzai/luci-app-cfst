@@ -144,7 +144,7 @@ ssh root@<router-ip> "
 opkg remove luci-app-cfst
 ```
 
-会自动移除 cron 任务；`/etc/config/cfst`（配置）以及 `/usr/share/cfst/bin/`（下载好的 cfst 程序）不会被删除，如需彻底清理请手动 `rm -rf /usr/share/cfst/bin`。日志、pid、运行状态、测速结果存放在 `/tmp/cfst/`（tmpfs），重启后自动清空，无需手动清理。
+会自动移除 cron 任务；`/etc/config/cfst`（配置）、`/usr/share/cfst/bin/`（下载好的 cfst 程序）以及 `/usr/share/cfst/state/`（日志、上次运行状态，会持久保存并自动限制日志大小）不会被删除，如需彻底清理请手动 `rm -rf /usr/share/cfst/bin /usr/share/cfst/state`。pid、测速结果存放在 `/tmp/cfst/`（tmpfs），重启后自动清空，无需手动清理。
 
 ## 已知限制
 

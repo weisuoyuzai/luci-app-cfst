@@ -2,27 +2,44 @@
 # Shared paths, logging and small helpers used by cfst-run, download-cfst.sh
 # and all backend-*.sh scripts. Meant to be sourced, not executed directly.
 
-# The downloaded cfst binary lives under /usr/share (persistent across
-# reboots, part of the overlay but just a single small file) so it doesn't
-# need to be re-downloaded every boot. Everything else (log, pid, status,
-# result csv) is short-lived run state and lives on tmpfs (/tmp) instead of
-# /root -- /root sits on the same small r/w overlay as the rest of the
-# firmware, and constantly rewriting logs/results there risks filling it up
-# (which then causes writes to silently fail) and generally isn't the right
-# place for a package to keep runtime state.
+# The downloaded binary and the small persistent state (log, last-run status)
+# live under /usr/share (survives reboots, part of the overlay but small and
+# infrequently written, so no meaningful flash-wear/space concern). Things
+# that are either large/unbounded (the result csv) or must NOT survive a
+# reboot (pid files -- a stale pid could coincidentally match an unrelated
+# process after reboot and wedge the "already running" lock forever) live on
+# tmpfs (/tmp) instead. Nothing lives under /root -- /root sits on the same
+# small r/w overlay as the rest of the firmware, and constantly rewriting
+# state there risks filling it up (which then causes writes to silently
+# fail) and generally isn't the right place for a package to keep runtime
+# state.
 CFST_BIN_DIR="/usr/share/cfst/bin"
+CFST_STATE_DIR="/usr/share/cfst/state"
 CFST_RUN_DIR="/tmp/cfst"
 CFST_BIN="$CFST_BIN_DIR/cfst"
 RESULT_CSV="$CFST_RUN_DIR/result.csv"
-LOG_FILE="$CFST_RUN_DIR/cfst.log"
+LOG_FILE="$CFST_STATE_DIR/cfst.log"
 PID_FILE="$CFST_RUN_DIR/run.pid"
-RUN_STATUS_FILE="$CFST_RUN_DIR/run_status.json"
+RUN_STATUS_FILE="$CFST_STATE_DIR/run_status.json"
 DOWNLOAD_STATUS_FILE="$CFST_RUN_DIR/download.status"
 DOWNLOAD_PID_FILE="$CFST_RUN_DIR/download.pid"
 
-mkdir -p "$CFST_BIN_DIR" "$CFST_RUN_DIR"
+# Log lives on persistent storage now, so cap it instead of letting it grow
+# forever: once it passes 256K, trim it down to the last 128K before the
+# next write.
+LOG_MAX_BYTES=262144
+LOG_TRIM_BYTES=131072
+
+mkdir -p "$CFST_BIN_DIR" "$CFST_STATE_DIR" "$CFST_RUN_DIR"
 
 log() {
+	local sz
+	if [ -f "$LOG_FILE" ]; then
+		sz=$(wc -c < "$LOG_FILE" 2>/dev/null)
+		if [ -n "$sz" ] && [ "$sz" -gt "$LOG_MAX_BYTES" ] 2>/dev/null; then
+			tail -c "$LOG_TRIM_BYTES" "$LOG_FILE" > "$LOG_FILE.trim" 2>/dev/null && mv "$LOG_FILE.trim" "$LOG_FILE"
+		fi
+	fi
 	echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOG_FILE"
 }
 
