@@ -2,26 +2,29 @@
 # Shared paths, logging and small helpers used by cfst-run, download-cfst.sh
 # and all backend-*.sh scripts. Meant to be sourced, not executed directly.
 
-# The downloaded binary and the small persistent state (log, last-run status)
-# live under /usr/share (survives reboots, part of the overlay but small and
-# infrequently written, so no meaningful flash-wear/space concern). Things
-# that are either large/unbounded (the result csv) or must NOT survive a
-# reboot (pid files -- a stale pid could coincidentally match an unrelated
-# process after reboot and wedge the "already running" lock forever) live on
-# tmpfs (/tmp) instead. Nothing lives under /root -- /root sits on the same
-# small r/w overlay as the rest of the firmware, and constantly rewriting
-# state there risks filling it up (which then causes writes to silently
-# fail) and generally isn't the right place for a package to keep runtime
-# state.
+# The downloaded binary and all small persistent state (log, last-run status,
+# last result, last download status) live under /usr/share (survives reboots
+# *and* survives any third-party "clear /tmp" cron/cleanup job some router
+# firmwares run in the background -- both were observed wiping /tmp/cfst
+# mid-session on this device). It's small and infrequently written, so no
+# meaningful flash-wear/space concern. Only the two pid lock files stay on
+# tmpfs (/tmp): they specifically must NOT survive a reboot (a stale pid
+# could coincidentally match an unrelated process after reboot and wedge the
+# "already running" lock forever), and losing one mid-session to an external
+# /tmp cleanup just means the lock is (harmlessly) not held anymore. Nothing
+# lives under /root -- /root sits on the same small r/w overlay as the rest
+# of the firmware, and constantly rewriting state there risks filling it up
+# (which then causes writes to silently fail) and generally isn't the right
+# place for a package to keep runtime state.
 CFST_BIN_DIR="/usr/share/cfst/bin"
 CFST_STATE_DIR="/usr/share/cfst/state"
 CFST_RUN_DIR="/tmp/cfst"
 CFST_BIN="$CFST_BIN_DIR/cfst"
-RESULT_CSV="$CFST_RUN_DIR/result.csv"
+RESULT_CSV="$CFST_STATE_DIR/result.csv"
 LOG_FILE="$CFST_STATE_DIR/cfst.log"
 PID_FILE="$CFST_RUN_DIR/run.pid"
 RUN_STATUS_FILE="$CFST_STATE_DIR/run_status.json"
-DOWNLOAD_STATUS_FILE="$CFST_RUN_DIR/download.status"
+DOWNLOAD_STATUS_FILE="$CFST_STATE_DIR/download.status"
 DOWNLOAD_PID_FILE="$CFST_RUN_DIR/download.pid"
 
 # Log lives on persistent storage now, so cap it instead of letting it grow
