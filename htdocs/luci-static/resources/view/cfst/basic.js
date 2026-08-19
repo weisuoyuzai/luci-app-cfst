@@ -27,6 +27,17 @@ var CfstColoWidget = form.Value.extend({
 		return map;
 	})(),
 
+	/* renderWidget below builds a plain <input> by hand instead of a ui.js
+	 * widget class (ui.Textfield etc.), so it has no widget instance for
+	 * the default formvalue() to find via dom.findClassInstance() -- that
+	 * default always returns null for this option, silently discarding
+	 * whatever was selected/typed on every save. Read the raw DOM value
+	 * directly instead. */
+	formvalue: function(section_id) {
+		var node = this.map.findElement('id', this.cbid(section_id));
+		return node ? node.value : '';
+	},
+
 	renderWidget: function(section_id, option_index, cfgvalue) {
 		var value = (cfgvalue != null ? cfgvalue : (this.default || '')).toString();
 		var selected = {};
