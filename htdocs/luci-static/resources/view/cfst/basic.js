@@ -32,9 +32,17 @@ var CfstColoWidget = form.Value.extend({
 	 * the default formvalue() to find via dom.findClassInstance() -- that
 	 * default always returns null for this option, silently discarding
 	 * whatever was selected/typed on every save. Read the raw DOM value
-	 * directly instead. */
+	 * directly instead.
+	 *
+	 * The framework's own per-option wrapper (the <div class="cbi-value">
+	 * row) already claims the bare cbid() string as ITS id -- that's what
+	 * isActive()/data-field rely on. Real ui.js widgets know this and put
+	 * their actual <input> at "widget."+id instead of colliding with it;
+	 * do the same here, or findElement('id', cbid) returns the wrapper div
+	 * (first match in document order), .value on it is undefined, and the
+	 * option always reads as empty and gets silently dropped on save. */
 	formvalue: function(section_id) {
-		var node = this.map.findElement('id', this.cbid(section_id));
+		var node = this.map.findElement('id', 'widget.' + this.cbid(section_id));
 		return node ? node.value : '';
 	},
 
@@ -48,7 +56,7 @@ var CfstColoWidget = form.Value.extend({
 				selected[v] = true;
 		});
 
-		var widgetId = this.cbid(section_id);
+		var widgetId = 'widget.' + this.cbid(section_id);
 		var textInput = E('input', {
 			'type': 'text',
 			'id': widgetId,
