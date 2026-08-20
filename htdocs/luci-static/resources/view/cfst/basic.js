@@ -28,22 +28,17 @@ var CfstColoWidget = form.Value.extend({
 	})(),
 
 	/* renderWidget below builds a plain <input> by hand instead of a ui.js
-	 * widget class (ui.Textfield etc.), so it has no widget instance for
-	 * the default formvalue() to find via dom.findClassInstance() -- that
-	 * default always returns null for this option, silently discarding
-	 * whatever was selected/typed on every save. Read the raw DOM value
-	 * directly instead.
-	 *
-	 * The framework's own per-option wrapper (the <div class="cbi-value">
-	 * row) already claims the bare cbid() string as ITS id -- that's what
-	 * isActive()/data-field rely on. Real ui.js widgets know this and put
-	 * their actual <input> at "widget."+id instead of colliding with it;
-	 * do the same here, or findElement('id', cbid) returns the wrapper div
-	 * (first match in document order), .value on it is undefined, and the
-	 * option always reads as empty and gets silently dropped on save. */
+	 * widget class (ui.Textfield etc.), so the default formvalue() (which
+	 * looks up a ui.js widget *instance* via dom.findClassInstance()) never
+	 * finds one and silently discards whatever was selected/typed, every
+	 * save. Reading it back out via an id lookup is fragile too -- which
+	 * exact id the per-option wrapper vs. the widget's own input "owns"
+	 * differs across LuCI versions, and getting it wrong means the lookup
+	 * silently resolves to the wrong node (or none). Sidestep all of that:
+	 * renderWidget keeps a direct reference to the actual <input> it built,
+	 * and formvalue() just reads that reference's .value straight away. */
 	formvalue: function(section_id) {
-		var node = this.map.findElement('id', 'widget.' + this.cbid(section_id));
-		return node ? node.value : '';
+		return this._textInput ? this._textInput.value : '';
 	},
 
 	renderWidget: function(section_id, option_index, cfgvalue) {
@@ -56,7 +51,7 @@ var CfstColoWidget = form.Value.extend({
 				selected[v] = true;
 		});
 
-		var widgetId = 'widget.' + this.cbid(section_id);
+		var widgetId = this.cbid(section_id);
 		var textInput = E('input', {
 			'type': 'text',
 			'id': widgetId,
@@ -65,6 +60,7 @@ var CfstColoWidget = form.Value.extend({
 			'style': 'width:100%;margin-top:8px;box-sizing:border-box',
 			'placeholder': _('Additional/custom IATA codes, comma-separated')
 		});
+		this._textInput = textInput;
 
 		var presetCodes = this.presetCodes;
 
