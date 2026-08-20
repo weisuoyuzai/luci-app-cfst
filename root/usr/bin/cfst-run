@@ -103,13 +103,17 @@ cd "$CFST_BIN_DIR" || exit 1
 
 FULL_ARGS="-n $CFST_THREADS -t $CFST_PING_COUNT -dn $CFST_DOWNLOAD_COUNT -dt $CFST_DOWNLOAD_TIME -tl $CFST_LATENCY_LIMIT -tlr $CFST_LOSS_LIMIT -sl $CFST_SPEED_LIMIT -p $CFST_RESULT_COUNT -o $RESULT_CSV"
 if [ -n "$CFST_COLO" ]; then
-	FULL_ARGS="$FULL_ARGS -cfcolo $CFST_COLO"
+	# -cfcolo is silently ignored outside HTTPing mode (cfst defaults to
+	# TCPing) -- without -httping the region filter has no effect at all,
+	# which is why "only these regions" looked like it was being ignored.
+	FULL_ARGS="$FULL_ARGS -httping -cfcolo $CFST_COLO"
 fi
 if [ -n "$IP_TXT" ] && [ -f "$IP_TXT" ]; then
 	FULL_ARGS="$FULL_ARGS -f $IP_TXT"
 fi
 
 rm -f "$RESULT_CSV"
+log "执行: $CFST_BIN $FULL_ARGS"
 $CFST_BIN $FULL_ARGS >> "$LOG_FILE" 2>&1
 
 if [ ! -f "$RESULT_CSV" ]; then
